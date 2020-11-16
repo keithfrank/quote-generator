@@ -18,6 +18,10 @@ body {
   justify-content: center;
 }
 
+.error {
+  color: red;
+}
+
 .quote-container {
   width: auto;
   max-width: 900px;
@@ -35,7 +39,8 @@ body {
   font-size: 2rem;
 }
 
-.fa-quote-left {
+.fa-quote-left,
+.fa-bomb {
   font-size: 4rem;
 }
 
