@@ -7,14 +7,11 @@ class Loader {
     this.loadingContentElement.insertAdjacentHTML('afterend', this.loaderHTML);
     this.loaderElement = document.getElementById('loader');
   }
-  // Events
-
   // Methods
   show() {
     this.loaderElement.hidden = false;
     this.loadingContentElement.hidden = true;
   }
-
   //hide the loader
   hide() {
     this.loaderElement.hidden = true;
@@ -30,6 +27,8 @@ const authorText = document.getElementById('author');
 const twitterBtn = document.getElementById('twitter');
 const newQuoteBtn = document.getElementById('new-quote');
 const loader = new Loader(quoteContainer);
+let previousQuoteObjString;
+let sameQuoteCount = 0;
 
 // Get Quote From API
 //using "http://api.allorigins.win/get?url="
@@ -37,26 +36,48 @@ const loader = new Loader(quoteContainer);
 
 async function getQuote() {
   loader.show();
+  const handleError = function () {
+    faIcon.classList.remove('fa-quote-left');
+    faIcon.classList.add('fa-bomb');
+    quoteText.classList.add('error');
+    authorText.classList.add('error');
+    quoteText.innerText = 'Anything that can go wrong, will go wrong... and it has. Please try again.';
+    authorText.innerText = 'Mr. Murphy';
+  };
+  const resetAfterError = function () {
+    faIcon.classList.add('fa-quote-left');
+    faIcon.classList.remove('fa-bomb');
+    quoteText.classList.remove('error');
+    authorText.classList.remove('error');
+  };
+  let tooFrequent;
   const proxyUrl = 'http://api.allorigins.win/get?url=';
   const apiUrl = 'http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json';
   try {
     const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
     let data = await response.text();
     let quoteObjString = JSON.parse(data).contents;
-    //extract quoteText
-    let quoteString = quoteObjString.match(new RegExp('quoteText":"' + '(.*)' + '", "quoteAuthor"'));
-    let cleanQuoteString = quoteString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
-
-    //extract authorText
-    let authorString = quoteObjString.match(new RegExp('quoteAuthor":"' + '(.*)' + '", "senderName"'));
-    let cleanAuthorString = authorString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
-    let cleanQuoteObj = {quoteText: cleanQuoteString, quoteAuthor: cleanAuthorString};
-
-    //check if quote is the same as last quote
-    if (cleanQuoteObj.quoteText === quoteText.innerText) {
-      // If quote is the same, request a new quote.
-      getQuote();
+    if (previousQuoteObjString === quoteObjString) {
+      // prevent too many requests
+      sameQuoteCount++;
+      //console.log('number of duplicate quotes is now: ' + sameQuoteCount);
+      if (sameQuoteCount > 1) throw 'Too many duplicate responses';
+      tooFrequent = setTimeout(getQuote, 800);
+      return false;
     } else {
+      clearTimeout(tooFrequent);
+      sameQuoteCount = 0;
+      //check if quote is the same as last quote
+      previousQuoteObjString = quoteObjString;
+      //extract quoteText
+      let quoteString = quoteObjString.match(new RegExp('quoteText":"' + '(.*)' + '", "quoteAuthor"'));
+      let cleanQuoteString = quoteString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
+
+      //extract authorText
+      let authorString = quoteObjString.match(new RegExp('quoteAuthor":"' + '(.*)' + '", "senderName"'));
+      let cleanAuthorString = authorString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
+      let cleanQuoteObj = {quoteText: cleanQuoteString, quoteAuthor: cleanAuthorString};
+
       // If Author is blank, add Unknown
       if (cleanQuoteObj.quoteAuthor === '') {
         authorText.innerText = 'Unknown';
@@ -71,27 +92,16 @@ async function getQuote() {
       }
       quoteText.innerText = cleanQuoteObj.quoteText;
       //if the previous request had returned and error, reset styles
-      faIcon.classList.add('fa-quote-left');
-      faIcon.classList.remove('fa-bomb');
-      quoteText.classList.remove('error');
-      authorText.classList.remove('error');
-      loader.hide();
+      resetAfterError();
     }
   } catch (error) {
-    // We need to deal with what happens when we get a syntax error TOKEN at
-    faIcon.classList.remove('fa-quote-left');
-    faIcon.classList.add('fa-bomb');
-    quoteText.classList.add('error');
-    authorText.classList.add('error');
-    quoteText.innerText = 'Anything that can go wrong, will go wrong... and it has. Please try again.';
-    authorText.innerText = 'Mr. Murphy';
-    // log this to server
-    //console.log('whoops, no quote', error);
-    loader.hide();
+    console.log(error);
+    handleError();
   }
+  loader.hide();
 }
 
-// // Tweet Quote
+// Tweet Quote
 function tweetQuote() {
   const quote = quoteText.innerText;
   const author = authorText.innerText;
@@ -99,7 +109,7 @@ function tweetQuote() {
   window.open(twitterUrl, '_blank');
 }
 
-//Event Listeners
+// Event Listeners
+this.addEventListener('load', getQuote);
 newQuoteBtn.addEventListener('click', getQuote);
 twitterBtn.addEventListener('click', tweetQuote);
-window.addEventListener('load', getQuote);
