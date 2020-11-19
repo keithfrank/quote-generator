@@ -61,7 +61,7 @@ async function getQuote() {
       // prevent too many requests
       sameQuoteCount++;
       //console.log('number of duplicate quotes is now: ' + sameQuoteCount);
-      if (sameQuoteCount > 1) throw 'Too many duplicate responses';
+      if (sameQuoteCount > 1) throw new Error('Too many duplicate responses');
       tooFrequent = setTimeout(getQuote, 800);
       return false;
     } else {
@@ -71,11 +71,11 @@ async function getQuote() {
       previousQuoteObjString = quoteObjString;
       //extract quoteText
       let quoteString = quoteObjString.match(new RegExp('quoteText":"' + '(.*)' + '", "quoteAuthor"'));
-      let cleanQuoteString = quoteString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
+      let cleanQuoteString = quoteString[1].replace(/\"/g, '"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
 
       //extract authorText
       let authorString = quoteObjString.match(new RegExp('quoteAuthor":"' + '(.*)' + '", "senderName"'));
-      let cleanAuthorString = authorString[1].replace(/\"/g, '\\"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
+      let cleanAuthorString = authorString[1].replace(/\"/g, '"').replace(/\n/g, '\\n').replace(/\\'/g, "'").replace(/\&/g, '\\&').replace(/\r/g, '\\r').replace(/\t/g, '\\t').replace(/\f/g, '\\f');
       let cleanQuoteObj = {quoteText: cleanQuoteString, quoteAuthor: cleanAuthorString};
 
       // If Author is blank, add Unknown
