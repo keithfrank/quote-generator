@@ -51,8 +51,8 @@ async function getQuote() {
     authorText.classList.remove('error');
   };
   let tooFrequent;
-  const proxyUrl = 'http://api.allorigins.win/get?url=';
-  const apiUrl = 'http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json';
+  const proxyUrl = 'https://api.allorigins.win/get?url=';
+  const apiUrl = 'https://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json';
   try {
     const response = await fetch(proxyUrl + encodeURIComponent(apiUrl), {cache: 'no-store'});
     let data = await response.text();
